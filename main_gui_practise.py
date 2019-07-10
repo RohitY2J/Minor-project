@@ -12,6 +12,8 @@ import matplotlib
 matplotlib.use("tkAgg")
 import matplotlib.pyplot as plt
 import numpy as np
+import mysql.connector
+from mysql.connector import Error
 
 y_var = np.array(np.zeros([20]))
 fig = ""
@@ -20,7 +22,51 @@ line =""
 times = 1
 arr = []
 ser = ""
+connection = mysql.connector.connect(host = 'localhost',
+                                     user = 'root', password = 'rohitkauri123')
 
+mycursor = connection.cursor()
+mycursor.execute("SHOW DATABASES LIKE 'minor_project';")
+myresult = mycursor.fetchall()
+if not len(myresult) == 0:
+    database_name = myresult[0][0]
+    print(database_name)
+    new_connection = mysql.connector.connect(host = 'localhost', database = database_name,
+                                             user = 'root', password = 'rohitkauri123')
+else:
+    mycursor.execute("CREATE DATABASE minor_project;")
+    new_connection = mysql.connector.connect(host = 'localhost', database = 'minor_project',
+                                             user = 'root', password = 'rohitkauri123')
+    new_cursor = new_connection.cursor()
+    new_cursor.execute("CREATE TABLE transmitter1 (SN int(255) auto_increment primary key, sensor1 int(255), sensor2 int(255), sensor3 int(255), sensor4 int(255));")
+    new_cursor.execute("CREATE TABLE transmitter2 (SN int(255) auto_increment primary key, sensor1 int(255), sensor2 int(255), sensor3 int(255), sensor4 int(255));")
+    new_cursor.execute("CREATE TABLE transmitter3 (SN int(255) auto_increment primary key, sensor1 int(255), sensor2 int(255), sensor3 int(255), sensor4 int(255));")
+
+def insert_into_database(arr):
+    global new_connection
+    new_cursor = new_connection.cursor()
+    try:
+        combination = int(arr[0])
+    except:
+        print("Not a number")
+        return
+    if combination > 15:
+        print("Value out of range")
+        return
+    print('Combination: '+str(combination))
+    length = len(arr)
+    index = []
+    i = 4
+    ind = 0
+    while combination > 0:
+        if (combination % 10) == 1:
+            index.append(i)
+        i = i-1
+        combination = int(combination / 10)
+
+    for i in index:
+        print(i)
+    
 def serial_read(root,port_num, baud_rate):
     global ser
     ser = serial.Serial()
@@ -32,6 +78,26 @@ def serial_read(root,port_num, baud_rate):
 
 def serial_read2(root):
     global y_var, arr, fig, ax, line, times, ser
+    '''ser_bytes = ser.readline()
+    decoded_bytes = ser_bytes.decode('utf-8')
+    print("\n"+str(decoded_bytes))
+    arr.append(decoded_bytes)
+    print(len(arr))  
+    print("============="+str(times))
+    if len(arr) == 5:
+        print(arr)
+        insert_into_database(arr)
+        y_var = np.append(y_var,int(arr[2]))
+        y_var = y_var[1:20+1]
+        line.set_ydata(y_var)
+        ax.relim()
+        ax.autoscale_view()
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+        arr = []
+        times = times + 1
+    root.after(1, serial_read2(root))
+    '''
     try:
         ser_bytes = ser.readline()
         decoded_bytes = ser_bytes.decode('utf-8')
@@ -40,8 +106,7 @@ def serial_read2(root):
         print(len(arr))  
         print("============="+str(times))
         if len(arr) == 5:
-            print(type(arr[2]))
-            print("Data needed:"+str(arr[2]))
+            insert_into_database(arr) 
             y_var = np.append(y_var,int(arr[2]))
             y_var = y_var[1:20+1]
             line.set_ydata(y_var)
