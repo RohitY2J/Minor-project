@@ -17,8 +17,8 @@ from mysql.connector import Error
 
 y_var = np.array(np.zeros([20]))
 fig = ""
-ax = ""
-line =""
+ax = ""0
+line = ""
 times = 1
 arr = []
 ser = ""
@@ -46,27 +46,54 @@ def insert_into_database(arr):
     global new_connection
     new_cursor = new_connection.cursor()
     try:
-        combination = int(arr[0])
+        val = int(arr[0])
+        bin_data = str(bin(int(arr[0])))
+        combination = int(bin_data[slice(2,6)])
     except:
         print("Not a number")
         return
-    if combination > 15:
+    if val > 15:
         print("Value out of range")
         return
     print('Combination: '+str(combination))
     length = len(arr)
     index = []
     i = 4
-    ind = 0
+    
     while combination > 0:
         if (combination % 10) == 1:
             index.append(i)
+            print("Appended "+str(i))
         i = i-1
         combination = int(combination / 10)
 
-    for i in index:
-        print(i)
+    i = 0
+    columns = ""
+    data_value = ""
+    values = []
     
+    if len(index) > 0: 
+        columns = "sensor"+str(index[len(index)-i-1])
+        data_value = "%s"
+        values.append(int(arr[i+1]))
+    i = i + 1
+
+    while i < len(index):
+        x = ",sensor"+str(index[len(index)-i-1])
+        columns = columns+x
+        data_value = data_value + "," + "%s"
+        values.append(int(arr[i+1]))
+        i = i + 1
+    sql = "INSERT INTO transmitter1("+columns+") values("+data_value+")"
+    sql1 = "INSERT INTO minor_project.transmitter1(sensor1) values(%s)"
+    new_cursor.execute(sql,tuple(values))
+    new_connection.commit()
+    print("Columns:" + columns)
+    print("Data: " +  data_value)
+    print("Sql: "+ sql)
+    print("Values: "+ str(values))
+                       
+                
 def serial_read(root,port_num, baud_rate):
     global ser
     ser = serial.Serial()
@@ -85,7 +112,6 @@ def serial_read2(root):
     print(len(arr))  
     print("============="+str(times))
     if len(arr) == 5:
-        print(arr)
         insert_into_database(arr)
         y_var = np.append(y_var,int(arr[2]))
         y_var = y_var[1:20+1]
@@ -149,7 +175,7 @@ def main_read(win):
     win.destroy()
     #window description    
     window = tk.Tk(screenName="Main",  baseName="What is this??",  useTk=1)          
-    window.title('Hello, Tkinter!')
+    window.title('Telemetry!')
     window.geometry('500x300') # Size 200, 200
     window.resizable(False, False) #dont resize the window
 
@@ -167,7 +193,7 @@ def main_read(win):
     action_menu.add_command(label="Show database", command= lambda: main_database(window))
     menubar.add_cascade(label="Action", menu=action_menu) 
 
-    img = ImageTk.PhotoImage(Image.open("dave.jpg")) #icon image
+    img = ImageTk.PhotoImage(Image.open("dave_80.jpg")) #icon image
     panel = tk.Label(window, image = img) #set the image
     panel.place(relx = 0.44, rely = 0.1)
 
@@ -203,7 +229,7 @@ def main_database(win):
     win.destroy()
     #window description    
     window = tk.Tk(screenName="Main",  baseName="What is this??",  useTk=1)          
-    window.title('Hello, Tkinter!')
+    window.title('Telemetry!')
     window.geometry('500x400') # Size 200, 200
     window.resizable(False, False) #dont resize the window
 
@@ -221,7 +247,7 @@ def main_database(win):
     action_menu.add_command(label="Show database", command= lambda: main_database(window))
     menubar.add_cascade(label="Action", menu=action_menu) 
 
-    img = ImageTk.PhotoImage(Image.open("dave.jpg")) #icon image
+    img = ImageTk.PhotoImage(Image.open("dave_80.jpg")) #icon image
     panel = tk.Label(window, image = img) #set the image
     panel.place(relx = 0.44, rely = 0.1)
 
